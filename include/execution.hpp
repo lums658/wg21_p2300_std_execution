@@ -12,6 +12,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Some functions (as marked) derived from libunifex, (c) Facebook,
+ * in accordance with the terms of the Apache License Version 2.0,
+ * the full text of which is available at https://llvm.org/LICENSE.txt
  */
 #pragma once
 
@@ -670,37 +674,6 @@ namespace std::execution {
   // NOT TO SPEC
   template <scheduler _Scheduler>
     using schedule_result_t = __call_result_t<schedule_t, _Scheduler>;
-
-#if 0
-namespace _on {
-  inline const struct _fn {
-    template<typename Scheduler, typename Sender>
-        requires sender<Sender> && scheduler<Scheduler> &&
-          tag_invocable<_fn, Sender, Scheduler>
-    auto operator()(Scheduler&& scheduler, Sender&& sender) const
-      noexcept/*(is_nothrow_tag_invocable_v<_fn, Scheduler, Sender>)*/
-        -> tag_invoke_result_t<_fn, Scheduler, Sender> {
-      return tag_invoke(
-          _fn{}, (Scheduler &&) scheduler, (Sender &&) sender);
-    }
-
-    template<typename Scheduler, typename Sender>
-    requires sender<Sender> && scheduler<Scheduler> &&
-          (!tag_invocable<_fn, Scheduler, Sender>)
-    auto operator()(Scheduler&& scheduler, Sender&& sender) const {
-      auto scheduleSender = schedule(scheduler);
-      return sequence(
-        std::move(scheduleSender),
-        with_query_value(
-          (Sender&&) sender,
-          get_scheduler,
-          (Scheduler&&) scheduler));
-    }
-  } on{};
-} // namespace _on
-
-using _on::on;
-#endif
 
 
   /////////////////////////////////////////////////////////////////////////////
@@ -2142,6 +2115,7 @@ using _on::on;
   inline constexpr then_t then{};
 
 
+  // Derived from libunifex include/unifex/just_from.hpp
   namespace _just_from {
     inline const struct _fn {
       template <typename Callable>
@@ -3842,6 +3816,8 @@ namespace __scope {
       }
     }
 
+    // Derived from async_scope::spawn_on from
+    // libunifex include/unifex/async_scope.hpp
     template <typename Sender, typename Scheduler>
     //    requires scheduler<Scheduler> &&
     //    sender_to<
@@ -3899,6 +3875,8 @@ namespace __scope {
       return stopSource_.request_stop();
     }
 
+    // Derived from async_scope::complete from
+    // libunifex include/unifex/async_scope.hpp
     auto complete() noexcept {
         just_from([this] () noexcept {
           end_of_scope();
